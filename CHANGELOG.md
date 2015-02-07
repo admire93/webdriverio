@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v2.4.5 (2015-01-30)
+* return promise result if responseMethod is not a function (see #401)
+
+## v2.4.4 (2015-01-24)
+* make PromiseHandler to handle Q promises (see #399)
+
+## v2.4.3 (2015-01-10)
+* `saveScreenshot` doesn't require a file path anymore if only the base64 data is required (see #393)
+* don't throw an error if error handler is registered (see #385)
+
+## v2.4.2 (2015-01-07)
+* fixed bug in PromiseHandler when execute command just got a single function parameter (closes #383)
+* make colored logs optional (closes #298)
+
 ## v2.4.1 (2014-12-28)
 * fixed bug in `selectByValue` and `selectByVisibleText` in which the absolute xPath queried value/text of different select element
 * allow more xpath expressions

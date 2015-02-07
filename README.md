@@ -109,6 +109,14 @@ Default: *silent*
 
 Options: *verbose* | *silent* | *command* | *data* | *result*
 
+### coloredLogs
+
+Type: `Boolean`
+
+Default: *true*
+
+Enables colors for log output
+
 ### screenshotPath
 Saves a screenshot to a given path if Selenium driver crashes
 
@@ -238,6 +246,11 @@ client
     })
     .end();
 ```
+
+## Run multiple browser at the same time
+
+Check out our [docs page](http://webdriver.io/guide/usage/multiremote.html) for more information on that.
+
 
 ## Selenium cloud providers
 

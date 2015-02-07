@@ -1,13 +1,8 @@
-var webdriverjs = require('../../../index.js'),
-    conf = require('../../conf/index.js'),
-    tmpConf = {
-        desiredCapabilities: {
-            browserName: 'phantomjs'
-        }
-    };
+var WebdriverIO = require('../../../../index.js'),
+    conf = require('../../../conf/index.js');
 
 /* global beforeEach */
-describe('event handling', function() {
+describe('event handling executed by single multibrowser instance', function() {
     describe('is able to emit and listen to driver specific events and', function() {
 
         var isCommandHandlerEmitted = false,
@@ -16,21 +11,22 @@ describe('event handling', function() {
             isEndHandlerEmitted = false,
             uri = null,
             desiredCapabilties = null,
-            client;
+            matrix, browserA;
 
         before(function() {
-            client = webdriverjs.remote(tmpConf);
+            matrix = WebdriverIO.multiremote(conf.capabilities);
+            browserA = matrix.select('browserA');
 
-            client.on('end', function() {
+            browserA.on('end', function() {
                 isEndHandlerEmitted = true;
             });
-            client.on('init', function() {
+            browserA.on('init', function() {
                 isInitHandlerEmitted = true;
             });
-            client.on('error', function() {
+            browserA.on('error', function() {
                 isErrorHandlerEmitted = true;
             });
-            client.on('command', function(e) {
+            browserA.on('command', function(e) {
 
                 // assign variables only on first command
                 if (isCommandHandlerEmitted) {
@@ -44,11 +40,11 @@ describe('event handling', function() {
         });
 
         it('should emit an init event after calling the init command', function(done) {
-            client
+            browserA
                 .init()
                 .call(function() {
                     assert.ok(isInitHandlerEmitted, 'init handler wasn\'t called');
-                    assert.strictEqual(uri.host, '127.0.0.1:4444');
+                    assert.strictEqual(uri.host, 'localhost:4444');
                     assert.strictEqual(desiredCapabilties, 'phantomjs');
                 })
                 .call(done);
@@ -56,7 +52,7 @@ describe('event handling', function() {
 
         it('should emit an error event after querying a non existing element', function(done) {
 
-            client
+            browserA
                 .url(conf.testPage.start)
                 // click on non existing element to cause an error
                 .click('#notExistentant', function(err) {
@@ -69,23 +65,9 @@ describe('event handling', function() {
 
         });
 
-        it('should not throw an error if an error handler is registered', function(done) {
-            isErrorHandlerEmitted = false;
-
-            client
-                .url(conf.testPage.start)
-                // click on non existing element should not cause an error because an event listener is registered
-                .click('#notExistentant')
-                .call(function() {
-                    assert.ok(isErrorHandlerEmitted, 'error handler was called');
-                })
-                .call(done);
-
-        });
-
         it('should emit an end event after calling the end command', function(done) {
 
-            client
+            browserA
                 .end()
                 .call(function() {
                     assert.ok(isEndHandlerEmitted, 'end handler wasn\'t called');
@@ -99,20 +81,20 @@ describe('event handling', function() {
         var iShouldBeGetTriggered = false,
             eventWasTriggeredAtLeastOnce = false;
 
-        before(h.setup());
+        before(h.setupMultibrowser());
 
         beforeEach(function() {
-            iShouldBeGetTriggered = false;
+            iShouldBeGetTriggered = 0;
             eventWasTriggeredAtLeastOnce = false;
-            this.client.removeAllListeners('testme');
+            this.browserA.removeAllListeners('testme');
         });
 
         it('should register and fire events with on/emit', function(done) {
 
-            this.client
+            this.browserA
                 .emit('testme')
                 .on('testme', function() {
-                    assert.ok(iShouldBeGetTriggered, 'event was triggered unexpected');
+                    iShouldBeGetTriggered.should.be.true;
                     eventWasTriggeredAtLeastOnce = true;
                 })
                 .call(function() {
@@ -131,34 +113,15 @@ describe('event handling', function() {
 
         it('should register and fire events with once/emit', function(done) {
 
-            this.client
+            this.browserA
                 .once('testme', function() {
-                    assert.ok(iShouldBeGetTriggered, 'event was triggered unexpected');
-                    assert.ok(!eventWasTriggeredAtLeastOnce, 'once event got triggered twice');
-                    eventWasTriggeredAtLeastOnce = true;
-                })
-                .call(function() {
-                    iShouldBeGetTriggered = true;
+                    ++iShouldBeGetTriggered;
+                    iShouldBeGetTriggered.should.be.equal(1);
                 })
                 .emit('testme')
                 .emit('testme')
                 .call(done);
 
-        });
-
-        it('two instances should have different event handlers', function() {
-            var clientA = webdriverjs.remote(tmpConf);
-            var clientB = webdriverjs.remote(tmpConf);
-
-            clientA.on('testme', function(key) {
-                assert.strictEqual(key, 'A');
-            });
-            clientB.on('testme', function(key) {
-                assert.strictEqual(key, 'B');
-            });
-
-            clientA.emit('testme', 'A');
-            clientB.emit('testme', 'B');
         });
     });
 });
